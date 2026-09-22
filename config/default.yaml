@@ -1,0 +1,41 @@
+camera:
+  device_index: 0
+  width: 1280
+  height: 720
+  mirror: true
+
+mediapipe:
+  max_num_hands: 1
+  min_detection_confidence: 0.75
+  min_tracking_confidence: 0.75
+  model_complexity: 1
+
+interaction:
+  pinch_threshold_px: 45
+  cooldown_sec: 0.4
+  hover_sec: 0.5
+  trigger_mode: pinch  # pinch | hover | both
+  pinch_fire_on: release  # release | stable_frames
+  pinch_stable_frames: 3
+
+smoothing:
+  ema_alpha: 0.3
+
+ui:
+  keyboard_origin: [20, 280]
+  key_width: 52
+  key_height: 52
+  key_gap: 6
+  row_gap: 8
+  show_skeleton: true
+  show_fps: true
+  demo_mode: false
+
+demo:
+  window_name: "VisualBoard Virtual Keyboard"
+
+mode:
+  default: keyboard  # keyboard | mouse
+
+mouse:
+  move_enabled: true

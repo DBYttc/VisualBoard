@@ -1,0 +1,5 @@
+# Copy to config/local.yaml and override machine-specific values.
+camera:
+  device_index: 0
+interaction:
+  pinch_threshold_px: 40
