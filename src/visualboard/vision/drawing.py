@@ -21,3 +21,11 @@ def draw_hand_skeleton(frame: Frame, hand: HandResult) -> None:
 def draw_pointer_dot(frame: Frame, point: Point2D, color=(0, 255, 255)) -> None:
     cv2.circle(frame, (int(point.x), int(point.y)), 8, color, -1)
     cv2.circle(frame, (int(point.x), int(point.y)), 10, (255, 255, 255), 2)
+
+
+def draw_measure_line(frame: Frame, a: Point2D, b: Point2D, color=(255, 200, 0)) -> None:
+    """把"量出来的手指宽度"画出来（调试深度按压时看这一条线是否贴着手指两侧）。"""
+    ax, ay, bx, by = int(a.x), int(a.y), int(b.x), int(b.y)
+    cv2.line(frame, (ax, ay), (bx, by), color, 2)
+    cv2.circle(frame, (ax, ay), 3, (255, 255, 255), -1)
+    cv2.circle(frame, (bx, by), 3, (255, 255, 255), -1)

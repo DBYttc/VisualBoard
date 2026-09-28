@@ -15,8 +15,36 @@ interaction:
   cooldown_sec: 0.4
   hover_sec: 0.5
   trigger_mode: pinch  # pinch | hover | both
-  pinch_fire_on: release  # release | stable_frames
+  pinch_fire_on: release  # release | stable_frames | press_edge
   pinch_stable_frames: 3
+  pinch_source: contact  # contact | depth | both（depth = 用表观尺寸变化当按下信号）
+
+# 用"手指表观尺寸随距离的变化"判断是否按下。
+# 物理：单目下 w_px ≈ f·W/Z，所以尺寸变大 = 离摄像头更近。
+# 默认关闭；关闭时整条链路与不用该功能完全一致。
+depth_press:
+  enabled: false
+  source: mask          # mask = 肤色分割量指节宽度；hand_scale = 手腕->中指根距离（不吃光照）
+  direction: far        # far = 尺寸变小算按下（俯视：手指下压）；near = 变大算按下（前置：手指伸向镜头）
+  baseline_mode: rolling  # rolling = 基线跟着手走；startup = 启动后标定一次并冻结
+  warmup_sec: 5.0       # startup 模式的摆姿势时间（从检测到手开始计时）
+  enter_ratio: 1.12     # 相对基线变化 12% 进入按压态（1.20 = 变化 20%）
+  exit_ratio: 1.06      # 回到 6% 以内算松开（迟滞，防抖）
+  stable_frames: 4      # 连续 N 帧确认才算按下
+  baseline_samples: 45  # 基线 = 最近 N 帧中位数（约 1.5s@30fps）
+  min_samples: 15       # 基线样本不足时不出信号
+  latch_key: true       # 按下瞬间锁定键位，抵消下压时的视差漂移
+  finger_landmarks: [6, 7]  # 量宽用的指段（默认食指中节）
+  half_len_px: 18       # 从中心往两侧搜索的最大半宽
+  samples: 5            # 沿指段的采样点数（取中位数）
+  center_tol_px: 3
+  min_segment_px: 8     # 指段投影短于此值视为不可靠
+  morph_kernel: 5       # 掩膜形态学核（<3 表示不做）
+  skin_y_min: 40        # 以下为 YCrCb 肤色阈值，光照不同可调
+  skin_cr_min: 133
+  skin_cr_max: 173
+  skin_cb_min: 77
+  skin_cb_max: 127
 
 smoothing:
   ema_alpha: 0.3

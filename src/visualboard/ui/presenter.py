@@ -6,9 +6,13 @@ from typing import Optional
 import cv2
 
 from visualboard.core.config_loader import UISettings
-from visualboard.core.types import AppMode, Frame, HandResult, PointerState
+from visualboard.core.types import AppMode, Frame, HandResult, Point2D, PointerState
 from visualboard.ui.virtual_keyboard import VirtualKeyboard
-from visualboard.vision.drawing import draw_hand_skeleton, draw_pointer_dot
+from visualboard.vision.drawing import (
+    draw_hand_skeleton,
+    draw_measure_line,
+    draw_pointer_dot,
+)
 
 
 @dataclass
@@ -17,6 +21,8 @@ class HudState:
     mode: AppMode = "keyboard"
     hand_detected: bool = False
     emitter_error: Optional[str] = None
+    depth_text: Optional[str] = None
+    depth_line: Optional[tuple[Point2D, Point2D]] = None
 
 
 class Presenter:
@@ -37,6 +43,9 @@ class Presenter:
 
         if pointer and pointer.valid:
             draw_pointer_dot(frame, pointer.index_px)
+
+        if hud.depth_line is not None:
+            draw_measure_line(frame, hud.depth_line[0], hud.depth_line[1])
 
         if hud.mode == "keyboard":
             self._draw_keyboard(frame, keyboard)
@@ -117,6 +126,17 @@ class Presenter:
             (200, 200, 200),
             1,
         )
+        if hud.depth_text:
+            y += 22
+            cv2.putText(
+                frame,
+                hud.depth_text,
+                (10, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 200, 0),
+                1,
+            )
         if hud.emitter_error:
             cv2.putText(
                 frame,

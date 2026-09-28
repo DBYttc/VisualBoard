@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 KeyId = NewType("KeyId", str)
-TriggerSource = Literal["pinch", "hover"]
+TriggerSource = Literal["pinch", "hover", "depth"]
 AppMode = Literal["keyboard", "mouse"]
 
 
