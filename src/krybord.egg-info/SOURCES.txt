@@ -41,6 +41,7 @@ tests/test_depth_press.py
 tests/test_depth_press_startup.py
 tests/test_finger_width.py
 tests/test_keyboard_emitter_mapping.py
+tests/test_keyboard_layout.py
 tests/test_main_loop_depth.py
 tests/test_multi_finger_depth.py
 tests/test_pointer_smooth.py

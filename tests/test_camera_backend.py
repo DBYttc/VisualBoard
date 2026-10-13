@@ -140,8 +140,12 @@ def test_force_mode_requests_working_resolution(monkeypatch):
     assert camera.read().shape[:2] == (720, 1280)
 
 
-def test_native_mode_skips_renegotiation_and_scales_frames(monkeypatch):
-    """native 模式：不调用 set()（省掉驱动切换分辨率的 2~3 秒），read() 里放大。"""
+def test_native_mode_skips_renegotiation_and_scales_uniformly(monkeypatch):
+    """native 模式：不调用 set()（省掉驱动切换分辨率的 2~3 秒），read() 里**等比**放大。
+
+    4:3 的 640x480 只按宽度压到 1280 -> 高度是 960 而不是 720；
+    强行拉到 1280x720 会让画面横向变形（手看起来会变扁）。
+    """
     cap = FakeCap(size=(640, 480))
     monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
 
@@ -149,17 +153,29 @@ def test_native_mode_skips_renegotiation_and_scales_frames(monkeypatch):
     frame = camera.read()
 
     assert cap.sets == []  # 关键：一次 set 都没有
-    assert frame.shape[:2] == (720, 1280)  # 内部统一到工作分辨率
+    assert camera.output_size == (1280, 960)
+    assert frame.shape[:2] == (960, 1280)
+    assert abs(1280 / 960 - 640 / 480) < 0.01  # 长宽比原样保留
 
 
-def test_silent_resolution_fallback_is_scaled(monkeypatch):
-    """摄像头不理会 set()、仍然交 640x480 时，也要统一成工作分辨率，否则布局错位。"""
+def test_output_size_matches_working_resolution_when_camera_agrees(monkeypatch):
+    cap = FakeCap(size=(1280, 720))
+    monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
+
+    camera = OpenCVCamera(_settings(capture="force"))
+
+    assert camera.output_size == (1280, 720)  # 16:9 摄像头 -> 不产生缩放
+
+
+def test_silent_resolution_fallback_keeps_aspect(monkeypatch):
+    """摄像头不理会 set()、仍然交 640x480 时，等比缩放到 1280x960，不能压扁。"""
     cap = FakeCap(size=(640, 480), honour_set=False)
     monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
 
     camera = OpenCVCamera(_settings(capture="force"))
 
-    assert frame_shape(camera.read()) == (720, 1280)
+    assert camera.output_size == (1280, 960)
+    assert frame_shape(camera.read()) == (960, 1280)
 
 
 def test_force_mode_can_request_a_different_capture_size(monkeypatch):

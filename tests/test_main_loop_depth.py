@@ -17,8 +17,19 @@ import visualboard.app.main_loop as ml
 from visualboard.app.main_loop import MainLoop
 from visualboard.core.config_loader import DepthPressSettings, Settings, load_settings
 from visualboard.core.types import HandResult, KeyId
+from visualboard.ui.virtual_keyboard import VirtualKeyboard
 
-KEY_CENTER = (46.0, 306.0)  # key_1 中心 = keyboard_origin(20,280) + 半键宽
+TARGET_KEY = "key_a"
+
+
+def _key_center(key_id: str = TARGET_KEY) -> tuple[float, float]:
+    """目标键的中心：从真实键盘布局里取，避免写死坐标（布局换过好几版）。"""
+    button = VirtualKeyboard(load_settings().ui).get_button(KeyId(key_id))
+    assert button is not None
+    return (button.x + button.width / 2.0, button.y + button.height / 2.0)
+
+
+KEY_CENTER = _key_center()  # 食指指尖要落在这个键上
 
 
 def _place_idle_fingers(landmarks: np.ndarray) -> None:
@@ -110,6 +121,8 @@ def _run_loop(monkeypatch, frames, settings) -> tuple[list[KeyId], int]:
     emitted: list[KeyId] = []
 
     class FakeCamera:
+        output_size = (1280, 720)  # 合成帧就是按 1280x720 画布造的
+
         def __init__(self, _settings):
             pass
 
@@ -165,7 +178,7 @@ def test_mask_source_fires_depth_press(monkeypatch):
     emitted, iterations = _run_loop(monkeypatch, frames, _settings(source="mask"))
 
     assert emitted, "深度按压链路没有触发任何按键"
-    assert emitted[0] == KeyId("key_1")
+    assert emitted[0] == KeyId(TARGET_KEY)
     assert iterations > 20  # 基线阶段确实跑过了
 
 
@@ -176,7 +189,7 @@ def test_landmark_sources_fire_depth_press(monkeypatch, source):
     emitted, _ = _run_loop(monkeypatch, frames, _settings(source=source))
 
     assert emitted, f"{source} 信号没有触发按键"
-    assert emitted[0] == KeyId("key_1")
+    assert emitted[0] == KeyId(TARGET_KEY)
 
 
 def test_depth_disabled_does_not_fire(monkeypatch):
@@ -223,4 +236,4 @@ def test_startup_mode_calibrates_then_fires(monkeypatch):
 
     emitted, _ = _run_loop(monkeypatch, frames, settings)
     assert emitted, "startup 模式下没有触发按键"
-    assert emitted[0] == KeyId("key_1")
+    assert emitted[0] == KeyId(TARGET_KEY)

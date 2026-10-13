@@ -1,5 +1,5 @@
 camera:
-  device_index: 1
+  device_index: 0
   width: 1280
   height: 720
   mirror: true
@@ -8,8 +8,10 @@ camera:
   # 也可以强制指定：dshow / msmf
   backend: auto
   # force  = 让摄像头按 width x height 输出（最清晰；但某些驱动切换分辨率要 2~3 秒）
-  # native = 用摄像头默认分辨率采集，程序内部缩放到 width x height
-  #          （启动快 ~2.5 秒；代价是真实采样精度取决于默认分辨率，通常是 640x480）
+  # native = 用摄像头默认分辨率采集，read() 里**等比**缩放到 width 宽
+  #          （高度按长宽比跟着变：4:3 摄像头在 width=1280 时画布是 1280x960，
+  #            不会为了凑 16:9 把画面压扁）
+  #          （启动快 ~2.5 秒；代价是采样精度取决于默认分辨率，通常是 640x480）
   capture: force
 
 mediapipe:
@@ -58,11 +60,16 @@ smoothing:
   ema_alpha: 0.3
 
 ui:
-  keyboard_origin: [20, 280]
-  key_width: 52
-  key_height: 52
-  key_gap: 6
-  row_gap: 8
+  # 虚拟键盘按真实键盘的"单位宽"网格布局（每行 15 个单位宽，键宽由宽度反推）：
+  #   `1..0-= + Bksp  /  Tab Q..P[]\  /  Caps A..L;' Enter  /  Shift Z..M,./ Shift  /  Space
+  canvas_width: 0      # 0 = 自动用 camera.width -> 键盘横向铺满整个画面
+  canvas_height: 0     # 0 = 自动用 camera.height（实际会用摄像头输出高度）
+  keyboard_margin: 0   # 键盘左右留白
+  keyboard_bottom: 20  # 键盘距画面底部的留白
+  key_gap: 6           # 键之间的横向间隙
+  row_gap: 8           # 行间距
+  key_aspect: 1.0      # 键高 / 单位宽（1.0 = 正方形键）
+  keyboard_opacity: 0.5  # 键面不透明度：0.5 = 50% 半透明（看得见压在下面的手）
   show_skeleton: true
   show_fps: true
   demo_mode: false

@@ -61,23 +61,48 @@ class Presenter:
         self._draw_hud(frame, hud, keyboard)
         return frame
 
+    def _fill_for(self, btn, keyboard: VirtualKeyboard):
+        """键面颜色。亮色 = 正在按键/悬停/Shift、Caps 已激活。"""
+        kid = str(btn.key_id)
+        if btn.is_pressed_flash:
+            return (90, 190, 255)
+        if btn.is_hovered:
+            return (70, 130, 235)
+        if keyboard.shift_armed and kid in ("key_shift_l", "key_shift_r"):
+            return (0, 150, 90)
+        if keyboard.caps_on and kid == "key_caps":
+            return (0, 150, 90)
+        return (50, 50, 50)
+
     def _draw_keyboard(self, frame: Frame, keyboard: VirtualKeyboard) -> None:
+        alpha = min(1.0, max(0.0, float(self._settings.keyboard_opacity)))
+
+        # 1) 键面先画到一层拷贝上，再按透明度整体混合 ——
+        #    alpha=0.5 时键面半透明，能看清压在下面的手和桌面。
+        target = frame if alpha >= 1.0 else frame.copy()
         for btn in keyboard.buttons:
-            if btn.is_pressed_flash:
-                fill = (80, 180, 255)
-            elif btn.is_hovered:
-                fill = (60, 120, 220)
-            else:
-                fill = (50, 50, 50)
             x1, y1, x2, y2 = btn.rect()
-            cv2.rectangle(frame, (x1, y1), (x2, y2), fill, -1)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (200, 200, 200), 1)
+            cv2.rectangle(target, (x1, y1), (x2, y2), self._fill_for(btn, keyboard), -1)
+        if target is not frame:
+            cv2.addWeighted(target, alpha, frame, 1.0 - alpha, 0.0, frame)
+
+        # 2) 边框和文字画在混合之后：不受透明度影响，始终清晰。
+        for btn in keyboard.buttons:
+            x1, y1, x2, y2 = btn.rect()
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (210, 210, 210), 1)
+
             label = btn.label
-            if str(btn.key_id) == "key_caps" and keyboard.caps_on:
+            kid = str(btn.key_id)
+            if kid == "key_caps" and keyboard.caps_on:
                 label = "CAPS"
-            scale = 0.45 if btn.is_special else 0.55
-            tx = x1 + 8
-            ty = y1 + btn.height // 2 + 6
+            elif kid in ("key_shift_l", "key_shift_r") and keyboard.shift_armed:
+                label = "SHIFT*"
+
+            # 字号随键高自适应（键盘铺满画面后键变大了，字也要跟着变大）
+            scale = max(0.45, min(1.15, btn.height / 95.0)) * (0.8 if btn.is_special else 1.0)
+            (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)
+            tx = x1 + max(4, (btn.width - tw) // 2)  # 居中，宽键上比左对齐好认
+            ty = y1 + (btn.height + th) // 2
             cv2.putText(
                 frame,
                 label,
