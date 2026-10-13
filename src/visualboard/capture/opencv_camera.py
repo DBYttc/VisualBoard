@@ -25,7 +25,17 @@ class OpenCVCamera:
     def __init__(self, settings: CameraSettings) -> None:
         self._settings = settings
         self._cap = self._open(settings)
+        self._output_size: Tuple[int, int] = (settings.width, settings.height)
         self._configure(settings)
+
+    @property
+    def output_size(self) -> Tuple[int, int]:
+        """read() 实际交付的尺寸（等比缩放后的）。
+
+        注意：只按宽度等比缩放，所以 4:3 的摄像头在 width=1280 时输出 1280x960。
+        界面画布必须用这个尺寸，不能强行按 16:9 拉 —— 否则画面会被压扁。
+        """
+        return self._output_size
 
     @staticmethod
     def _open(settings: CameraSettings):
@@ -74,11 +84,16 @@ class OpenCVCamera:
                 int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                 int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
             )
+            native_w, native_h = native
+            if native_w > 0 and native_h > 0:
+                scale = settings.width / native_w
+                self._output_size = (settings.width, max(1, int(round(native_h * scale))))
             logger.info(
-                "capture=native: keeping camera default %s, frames scaled to %dx%d in read()",
-                f"{native[0]}x{native[1]}" if native[0] and native[1] else "(unknown yet)",
-                settings.width,
-                settings.height,
+                "capture=native: keeping camera default %s, frames scaled to %dx%d "
+                "(uniform scale, no aspect distortion)",
+                f"{native_w}x{native_h}" if native_w and native_h else "(unknown yet)",
+                self._output_size[0],
+                self._output_size[1],
             )
             return
 
@@ -112,6 +127,10 @@ class OpenCVCamera:
                 settings.width,
                 settings.height,
             )
+        # force 模式下摄像头应该已经给到目标分辨率；万一没有，也按比例缩放
+        if actual[0] > 0 and actual[1] > 0:
+            scale = settings.width / actual[0]
+            self._output_size = (settings.width, max(1, int(round(actual[1] * scale))))
 
     def read(self) -> Optional[Frame]:
         ok, frame = self._cap.read()
@@ -121,9 +140,9 @@ class OpenCVCamera:
         if self._settings.mirror:
             frame = cv2.flip(frame, 1)
 
-        # 统一输出成 width x height：这样键盘布局、像素阈值在任何摄像头 /
-        # capture 模式下含义都一致（fail-safe：摄像头悄悄降分辨率也不会错位）。
-        target = (self._settings.width, self._settings.height)
+        # 等比缩放到固定宽度：像素阈值（捏合距离等）在任何摄像头下含义一致，
+        # 而且**不会改变长宽比** —— 4:3 的摄像头就是 4:3，画面不会被压扁。
+        target = self._output_size
         if (frame.shape[1], frame.shape[0]) != target:
             frame = cv2.resize(frame, target, interpolation=cv2.INTER_LINEAR)
         return frame

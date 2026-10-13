@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+import dataclasses
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -53,7 +54,17 @@ class MainLoop:
         self._camera = OpenCVCamera(settings.camera)
         self._tracker = HandTracker(settings.mediapipe)
         self._pointer_tracker = PointerStateTracker(settings.smoothing)
-        self._keyboard = VirtualKeyboard(settings.ui)
+
+        # 画布尺寸跟着摄像头的**实际输出**走：4:3 摄像头在 width=1280 时输出 1280x960，
+        # 若还按配置的 720 高布局，键盘就会浮在画面中间。等比缩放保证画面不被压扁。
+        ui = settings.ui
+        out_w, out_h = self._camera.output_size
+        if (out_w, out_h) != (ui.canvas_width, ui.canvas_height):
+            logger.info("UI canvas follows camera output: %dx%d", out_w, out_h)
+            ui = dataclasses.replace(ui, canvas_width=out_w, canvas_height=out_h)
+        self._ui = ui
+
+        self._keyboard = VirtualKeyboard(ui)
         self._depth_settings = settings.depth_press
         self._trigger = TriggerEngine(settings.interaction, self._depth_settings)
         self._depth = DepthPressDetector(self._depth_settings)
@@ -62,7 +73,7 @@ class MainLoop:
         self._emitter = KeyboardEmitter(self._keyboard)
         self._mouse = MouseEmitter(settings.mouse.move_enabled)
         self._modes = ModeController(settings.mode.default)
-        self._presenter = Presenter(settings.ui)
+        self._presenter = Presenter(ui)
         self._fps = FpsCounter()
         self._window = settings.demo.window_name
         self._typed_buffer = ""
@@ -142,6 +153,8 @@ class MainLoop:
             self._typed_buffer = self._typed_buffer[:-1]
         elif char == "\n":
             self._typed_buffer += "\\n"
+        elif char == "\t":
+            self._typed_buffer += "\\t"
         else:
             self._typed_buffer += char
         if len(self._typed_buffer) > 48:
@@ -196,10 +209,12 @@ class MainLoop:
                 )
                 self._presenter.render(frame, hand, pointer, self._keyboard, hud)
                 if self._typed_buffer and self._modes.mode == "keyboard":
+                    # 画在键盘上沿之上，避免被半透明键盘压住看不清
+                    buffer_y = max(20, int(self._keyboard.top) - 12)
                     cv2.putText(
                         frame,
                         f"Buf: {self._typed_buffer}",
-                        (10, frame.shape[0] - 50),
+                        (10, buffer_y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.5,
                         (180, 255, 180),
