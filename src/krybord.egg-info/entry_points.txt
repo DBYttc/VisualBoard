@@ -1,0 +1,2 @@
+[console_scripts]
+krybord = visualboard.app.main:main

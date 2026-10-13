@@ -102,20 +102,11 @@ class SmoothingSettings:
 
 @dataclass(frozen=True, slots=True)
 class UISettings:
-    """虚拟键盘的画布与外观。
-
-    键盘按真实键盘的"单位宽"网格布局（每行 15 个单位宽），
-    尺寸由 canvas_width 反推，默认取摄像头宽度 -> 铺满整个画面。
-    """
-
-    canvas_width: int  # 画面宽（键盘铺满的宽度）
-    canvas_height: int  # 画面高（用于把键盘贴到画面底部）
-    keyboard_margin: int  # 键盘左右留白
-    keyboard_bottom: int  # 键盘距画面底部的留白
-    key_gap: int  # 键之间的横向间隙
-    row_gap: int  # 行间距
-    key_aspect: float  # 键高 / 单位宽（1.0 = 正方形键）
-    keyboard_opacity: float  # 键面不透明度：0.5 = 50% 半透明（能看见下面的手）
+    keyboard_origin: Tuple[int, int]
+    key_width: int
+    key_height: int
+    key_gap: int
+    row_gap: int
     show_skeleton: bool
     show_fps: bool
     demo_mode: bool
@@ -220,14 +211,15 @@ def _parse_settings(data: dict[str, Any]) -> Settings:
         if not isinstance(val, dict):
             raise ValueError(f"Missing or invalid config section: {name}")
 
-    cam_width = int(_require(cam, "width", "camera"))
-    cam_height = int(_require(cam, "height", "camera"))
+    origin = _require(ui, "keyboard_origin", "ui")
+    if not isinstance(origin, (list, tuple)) or len(origin) != 2:
+        raise ValueError("ui.keyboard_origin must be [x, y]")
 
     return Settings(
         camera=CameraSettings(
             device_index=int(_require(cam, "device_index", "camera")),
-            width=cam_width,
-            height=cam_height,
+            width=int(_require(cam, "width", "camera")),
+            height=int(_require(cam, "height", "camera")),
             mirror=bool(_require(cam, "mirror", "camera")),
             backend=str(cam.get("backend", "auto")),
             capture=str(cam.get("capture", "force")),
@@ -261,14 +253,11 @@ def _parse_settings(data: dict[str, Any]) -> Settings:
             ema_alpha=float(_require(smooth, "ema_alpha", "smoothing")),
         ),
         ui=UISettings(
-            canvas_width=int(ui.get("canvas_width") or cam_width),
-            canvas_height=int(ui.get("canvas_height") or cam_height),
-            keyboard_margin=int(ui.get("keyboard_margin", 0)),
-            keyboard_bottom=int(ui.get("keyboard_bottom", 20)),
+            keyboard_origin=(int(origin[0]), int(origin[1])),
+            key_width=int(_require(ui, "key_width", "ui")),
+            key_height=int(_require(ui, "key_height", "ui")),
             key_gap=int(_require(ui, "key_gap", "ui")),
             row_gap=int(_require(ui, "row_gap", "ui")),
-            key_aspect=float(ui.get("key_aspect", 1.0)),
-            keyboard_opacity=float(ui.get("keyboard_opacity", 0.5)),
             show_skeleton=bool(_require(ui, "show_skeleton", "ui")),
             show_fps=bool(_require(ui, "show_fps", "ui")),
             demo_mode=bool(_require(ui, "demo_mode", "ui")),

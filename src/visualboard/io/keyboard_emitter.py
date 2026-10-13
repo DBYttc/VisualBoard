@@ -30,9 +30,6 @@ class KeyboardEmitter:
             elif output == "\n":
                 self._controller.press(Key.enter)
                 self._controller.release(Key.enter)
-            elif output == "\t":
-                self._controller.press(Key.tab)
-                self._controller.release(Key.tab)
             else:
                 self._controller.type(output)
             logger.info("Emitted key=%s source=%s", event.key_id, event.source)

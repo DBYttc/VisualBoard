@@ -26,12 +26,7 @@ import numpy.typing as npt
 
 from visualboard.core.config_loader import DepthPressSettings
 from visualboard.core.types import Frame
-
-# MediaPipe 关键点索引
-WRIST = 0
-INDEX_MCP = 5
-INDEX_TIP = 8
-MIDDLE_MCP = 9
+from visualboard.vision.landmarks import FINGER_SEGMENTS, MIDDLE_MCP, WRIST
 
 # 采样步长（像素）。0.5 让边界估计有半像素分辨率：40px 宽的手指出 1.25% 量化噪声，
 # 而我们要检测的信号量级是 10% 上下。
@@ -55,6 +50,25 @@ class FingerWidth:
         return ((cx - nx * half, cy - ny * half), (cx + nx * half, cy + ny * half))
 
 
+def finger_projection_px(
+    name: str, landmarks_px: npt.NDArray[np.float64]
+) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
+    """单指 MCP->TIP 投影长度，返回 (端点a, 端点b, 像素长度)。
+
+    ``name`` 为 thumb/index/middle/ring/pinky。俯视下压时该投影会明显缩短。
+    """
+    if name not in FINGER_SEGMENTS:
+        raise ValueError(f"unknown finger name: {name}")
+    i, j = FINGER_SEGMENTS[name]
+    a = np.asarray(landmarks_px[i], dtype=float)
+    b = np.asarray(landmarks_px[j], dtype=float)
+    return (
+        (float(a[0]), float(a[1])),
+        (float(b[0]), float(b[1])),
+        float(np.hypot(b[0] - a[0], b[1] - a[1])),
+    )
+
+
 def scale_segment_px(
     source: str, landmarks_px: npt.NDArray[np.float64]
 ) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
@@ -64,16 +78,14 @@ def scale_segment_px(
     方便确认"量的是哪一段、数值合不合理"。
 
     - ``hand_scale``：手腕(0) -> 中指根(9)。整只手靠近/远离时变化明显。
-    - ``finger_length``：食指根(5) -> 食指尖(8) 的**投影长度**。
+    - ``finger_length``：食指根(5) -> 食指尖(8) 的**投影长度**（兼容旧单指路径）。
       俯视机位下"手指下压"主要是绕掌指关节转动、手腕几乎不动，
       此时 hand_scale 基本不变，而这条投影长度会明显缩短 -> 更适合下压动作。
     """
     if source == "finger_length":
-        i, j = INDEX_MCP, INDEX_TIP
-    else:
-        i, j = WRIST, MIDDLE_MCP
-    a = np.asarray(landmarks_px[i], dtype=float)
-    b = np.asarray(landmarks_px[j], dtype=float)
+        return finger_projection_px("index", landmarks_px)
+    a = np.asarray(landmarks_px[WRIST], dtype=float)
+    b = np.asarray(landmarks_px[MIDDLE_MCP], dtype=float)
     return (
         (float(a[0]), float(a[1])),
         (float(b[0]), float(b[1])),

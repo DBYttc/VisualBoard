@@ -8,10 +8,8 @@ camera:
   # 也可以强制指定：dshow / msmf
   backend: auto
   # force  = 让摄像头按 width x height 输出（最清晰；但某些驱动切换分辨率要 2~3 秒）
-  # native = 用摄像头默认分辨率采集，read() 里**等比**缩放到 width 宽
-  #          （高度按长宽比跟着变：4:3 摄像头在 width=1280 时画布是 1280x960，
-  #            不会为了凑 16:9 把画面压扁）
-  #          （启动快 ~2.5 秒；代价是采样精度取决于默认分辨率，通常是 640x480）
+  # native = 用摄像头默认分辨率采集，程序内部缩放到 width x height
+  #          （启动快 ~2.5 秒；代价是真实采样精度取决于默认分辨率，通常是 640x480）
   capture: force
 
 mediapipe:
@@ -25,16 +23,16 @@ interaction:
   cooldown_sec: 0.4
   hover_sec: 0.5
   trigger_mode: pinch  # pinch | hover | both
-  pinch_fire_on: release  # release | stable_frames | press_edge
+  pinch_fire_on: press_edge  # release | stable_frames | press_edge
   pinch_stable_frames: 3
-  pinch_source: contact  # contact | depth | both（depth = 用表观尺寸变化当按下信号）
+  pinch_source: depth  # contact | depth | both（depth = 五指投影长度变化）
 
 # 用"手指表观尺寸随距离的变化"判断是否按下。
 # 物理：单目下 w_px ≈ f·W/Z，所以尺寸变大 = 离摄像头更近。
-# 默认关闭；关闭时整条链路与不用该功能完全一致。
+# source=finger_length 时走五指独立投影按压（俯视桌面打字）。
 depth_press:
-  enabled: false
-  source: mask          # mask = 肤色分割量指节宽度；hand_scale = 手腕->中指根距离（不吃光照）
+  enabled: true
+  source: finger_length # mask | hand_scale | finger_length（五指 MCP->TIP 投影）
   direction: far        # far = 尺寸变小算按下（俯视：手指下压）；near = 变大算按下（前置：手指伸向镜头）
   baseline_mode: rolling  # rolling = 基线跟着手走；startup = 启动后标定一次并冻结
   warmup_sec: 5.0       # startup 模式的摆姿势时间（从检测到手开始计时）
@@ -60,16 +58,11 @@ smoothing:
   ema_alpha: 0.3
 
 ui:
-  # 虚拟键盘按真实键盘的"单位宽"网格布局（每行 15 个单位宽，键宽由宽度反推）：
-  #   `1..0-= + Bksp  /  Tab Q..P[]\  /  Caps A..L;' Enter  /  Shift Z..M,./ Shift  /  Space
-  canvas_width: 0      # 0 = 自动用 camera.width -> 键盘横向铺满整个画面
-  canvas_height: 0     # 0 = 自动用 camera.height（用于把键盘贴到画面底部）
-  keyboard_margin: 0   # 键盘左右留白
-  keyboard_bottom: 20  # 键盘距画面底部的留白
-  key_gap: 6           # 键之间的横向间隙
-  row_gap: 8           # 行间距
-  key_aspect: 1.0      # 键高 / 单位宽（1.0 = 正方形键）
-  keyboard_opacity: 0.5  # 键面不透明度：0.5 = 50% 半透明（看得见压在下面的手）
+  keyboard_origin: [20, 280]
+  key_width: 52
+  key_height: 52
+  key_gap: 6
+  row_gap: 8
   show_skeleton: true
   show_fps: true
   demo_mode: false

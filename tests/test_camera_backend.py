@@ -140,12 +140,8 @@ def test_force_mode_requests_working_resolution(monkeypatch):
     assert camera.read().shape[:2] == (720, 1280)
 
 
-def test_native_mode_skips_renegotiation_and_scales_uniformly(monkeypatch):
-    """native 模式：不调用 set()（省掉驱动切换分辨率的 2~3 秒），read() 里**等比**放大。
-
-    4:3 的 640x480 只按宽度压到 1280 -> 高度是 960 而不是 720；
-    如果强行拉到 1280x720 画面就会横向变形（手看起来会变扁）。
-    """
+def test_native_mode_skips_renegotiation_and_scales_frames(monkeypatch):
+    """native 模式：不调用 set()（省掉驱动切换分辨率的 2~3 秒），read() 里放大。"""
     cap = FakeCap(size=(640, 480))
     monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
 
@@ -153,34 +149,21 @@ def test_native_mode_skips_renegotiation_and_scales_uniformly(monkeypatch):
     frame = camera.read()
 
     assert cap.sets == []  # 关键：一次 set 都没有
-    assert camera.output_size == (1280, 960)
-    assert frame.shape[:2] == (960, 1280)
-    # 长宽比必须原样保留（4:3）
-    assert abs(1280 / 960 - 640 / 480) < 0.01
+    assert frame.shape[:2] == (720, 1280)  # 内部统一到工作分辨率
 
 
-def test_output_size_matches_working_resolution_when_camera_agrees(monkeypatch):
-    cap = FakeCap(size=(1280, 720))
-    monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
-
-    camera = OpenCVCamera(_settings(capture="force"))
-
-    assert camera.output_size == (1280, 720)  # 16:9 摄像头 -> 不产生任何缩放
-
-
-def test_silent_resolution_fallback_keeps_aspect(monkeypatch):
-    """摄像头不理会 set()、仍然交 640x480 时，等比缩放到 1280x960，不能压扁。"""
+def test_silent_resolution_fallback_is_scaled(monkeypatch):
+    """摄像头不理会 set()、仍然交 640x480 时，也要统一成工作分辨率，否则布局错位。"""
     cap = FakeCap(size=(640, 480), honour_set=False)
     monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
 
     camera = OpenCVCamera(_settings(capture="force"))
 
-    assert camera.output_size == (1280, 960)
-    assert frame_shape(camera.read()) == (960, 1280)
+    assert frame_shape(camera.read()) == (720, 1280)
 
 
 def test_force_mode_can_request_a_different_capture_size(monkeypatch):
-    """capture_width/height 只影响"向摄像头请求什么"，输出仍统一到 width 宽。"""
+    """capture_width/height 只影响"向摄像头请求什么"，工作坐标系仍是 width x height。"""
     cap = FakeCap(size=(960, 540))
     monkeypatch.setattr(cv2, "VideoCapture", lambda _i, _a: cap)
 
