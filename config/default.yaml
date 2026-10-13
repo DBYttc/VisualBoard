@@ -1,8 +1,16 @@
 camera:
-  device_index: 0
+  device_index: 1
   width: 1280
   height: 720
   mirror: true
+  # auto = 先试 DSHOW（Windows 上打开内置摄像头比默认的 MSMF 快很多，
+  #        实测 MSMF 8~24 秒、DSHOW 0.6 秒），打不开再退回系统默认
+  # 也可以强制指定：dshow / msmf
+  backend: auto
+  # force  = 让摄像头按 width x height 输出（最清晰；但某些驱动切换分辨率要 2~3 秒）
+  # native = 用摄像头默认分辨率采集，程序内部缩放到 width x height
+  #          （启动快 ~2.5 秒；代价是真实采样精度取决于默认分辨率，通常是 640x480）
+  capture: force
 
 mediapipe:
   max_num_hands: 1

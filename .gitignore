@@ -10,5 +10,7 @@ __pycache__/
 .idea/
 .vscode/
 config/local.yaml
+depth_press_snapshot*.png
+*.depth_debug.png
 *.mp4
 .DS_Store

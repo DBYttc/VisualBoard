@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Tuple
+from typing import Any, Literal, Optional, Tuple
 
 import yaml
 
@@ -23,6 +23,17 @@ class CameraSettings:
     width: int
     height: int
     mirror: bool
+    # auto = 先试 DSHOW 再退回系统默认（Windows 上 MSMF 打开内置摄像头可能慢到 8~24 秒）
+    # dshow / msmf = 强制指定后端
+    backend: Literal["auto", "dshow", "msmf"] = "auto"
+    # force  = 让摄像头按 width x height 输出（最清晰；但某些驱动切换分辨率要 2~3 秒）
+    # native = 用摄像头默认分辨率采集，程序内部缩放到 width x height
+    #          （启动快 ~3 秒；代价是真实采样精度取决于摄像头默认分辨率，通常 640x480）
+    capture: Literal["force", "native"] = "force"
+    # force 模式下真正向摄像头请求的尺寸（None = 与 width/height 相同）。
+    # 有些驱动请求非标准尺寸时会回退到更快的模式，用 probe_cameras.py 试出来。
+    capture_width: Optional[int] = None
+    capture_height: Optional[int] = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +146,10 @@ def _require(section: dict[str, Any], key: str, path: str) -> Any:
     return section[key]
 
 
+def _optional_int(value: Any) -> Optional[int]:
+    return None if value is None else int(value)
+
+
 def _parse_depth_press(section: Any) -> DepthPressSettings:
     """depth_press 是可选段：缺失/为 None 都退回默认值（默认关闭）。"""
     if not isinstance(section, dict):
@@ -206,6 +221,10 @@ def _parse_settings(data: dict[str, Any]) -> Settings:
             width=int(_require(cam, "width", "camera")),
             height=int(_require(cam, "height", "camera")),
             mirror=bool(_require(cam, "mirror", "camera")),
+            backend=str(cam.get("backend", "auto")),
+            capture=str(cam.get("capture", "force")),
+            capture_width=_optional_int(cam.get("capture_width")),
+            capture_height=_optional_int(cam.get("capture_height")),
         ),
         mediapipe=MediaPipeSettings(
             max_num_hands=int(_require(mp, "max_num_hands", "mediapipe")),
