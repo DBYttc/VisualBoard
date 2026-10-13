@@ -24,14 +24,11 @@ def interaction_settings() -> InteractionSettings:
 @pytest.fixture
 def ui_settings() -> UISettings:
     return UISettings(
-        canvas_width=1280,
-        canvas_height=720,
-        keyboard_margin=0,
-        keyboard_bottom=20,
+        keyboard_origin=(20, 280),
+        key_width=52,
+        key_height=52,
         key_gap=6,
         row_gap=8,
-        key_aspect=1.0,
-        keyboard_opacity=0.5,
         show_skeleton=True,
         show_fps=True,
         demo_mode=False,

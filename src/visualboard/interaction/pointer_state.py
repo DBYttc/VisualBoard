@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict, List, Optional
 
 from visualboard.core.config_loader import SmoothingSettings
-from visualboard.core.types import HandResult, Point2D, PointerState
-from visualboard.vision.landmarks import INDEX_FINGER_TIP, THUMB_TIP
+from visualboard.core.types import FingerPointer, HandResult, Point2D, PointerState
+from visualboard.vision.finger_width import finger_projection_px
+from visualboard.vision.landmarks import FINGER_NAMES, FINGER_TIPS
 
 
 class PointerStateTracker:
     def __init__(self, settings: SmoothingSettings) -> None:
         self._alpha = settings.ema_alpha
-        self._smooth_index: Optional[Point2D] = None
-        self._smooth_thumb: Optional[Point2D] = None
+        self._smooth_tips: Dict[str, Optional[Point2D]] = {
+            name: None for name in FINGER_NAMES
+        }
 
     def reset(self) -> None:
-        self._smooth_index = None
-        self._smooth_thumb = None
+        self._smooth_tips = {name: None for name in FINGER_NAMES}
 
     def _ema(self, prev: Optional[Point2D], raw: Point2D) -> Point2D:
         if prev is None:
@@ -37,25 +38,35 @@ class PointerStateTracker:
             return PointerState(
                 index_px=Point2D(0, 0),
                 thumb_px=Point2D(0, 0),
-                pinch_distance_px= float("inf"),
+                pinch_distance_px=float("inf"),
                 valid=False,
+                fingers=(),
             )
 
-        idx = hand.landmarks_px[INDEX_FINGER_TIP]
-        thumb = hand.landmarks_px[THUMB_TIP]
-        raw_index = Point2D(float(idx[0]), float(idx[1]))
-        raw_thumb = Point2D(float(thumb[0]), float(thumb[1]))
+        lm = hand.landmarks_px
+        fingers: List[FingerPointer] = []
+        for name in FINGER_NAMES:
+            tip_idx = FINGER_TIPS[name]
+            raw = Point2D(float(lm[tip_idx][0]), float(lm[tip_idx][1]))
+            smoothed = self._ema(self._smooth_tips[name], raw)
+            self._smooth_tips[name] = smoothed
+            _a, _b, proj = finger_projection_px(name, lm)
+            fingers.append(
+                FingerPointer(
+                    name=name,  # type: ignore[arg-type]
+                    tip_px=smoothed,
+                    projection_px=proj,
+                )
+            )
 
-        self._smooth_index = self._ema(self._smooth_index, raw_index)
-        self._smooth_thumb = self._ema(self._smooth_thumb, raw_thumb)
+        index_px = self._smooth_tips["index"]
+        thumb_px = self._smooth_tips["thumb"]
+        assert index_px is not None and thumb_px is not None
 
-        assert self._smooth_index is not None
-        assert self._smooth_thumb is not None
-
-        dist = self._distance(self._smooth_index, self._smooth_thumb)
         return PointerState(
-            index_px=self._smooth_index,
-            thumb_px=self._smooth_thumb,
-            pinch_distance_px=dist,
+            index_px=index_px,
+            thumb_px=thumb_px,
+            pinch_distance_px=self._distance(index_px, thumb_px),
             valid=True,
+            fingers=tuple(fingers),
         )
