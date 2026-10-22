@@ -1,0 +1,413 @@
+# Generated from a data_kind=real session. Do not hand-edit the numbers.
+data_kind: real
+raw_path: experiments/raw/session_select_40cm_20261021_211329.csv
+distance_cm: '40'
+recorded_at: '2026-10-21T21:13:29'
+width: '1280'
+height: '720'
+n_pos: 20
+n_neg: 20
+rounds: 2
+satisfaction_rule:
+  test_rate_min: 0.85
+  far_max: 0.15
+coordinate:
+  enter_ratio: 1.06
+  exit_ratio: 1.04
+  stable_frames: 1
+  pinch_threshold_px: null
+  tp: 11
+  fn: 9
+  fp: 1
+  tn: 19
+  test_rate: 0.75
+  recall: 0.55
+  far: 0.05
+  latency_mean: 0.562896
+  n: 40
+  param_text: enter_ratio=1.06, exit_ratio=1.04, stable_frames=1
+peaks:
+  enter_ratio:
+    enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40
+    param_text: enter_ratio=1.06
+  stable_frames:
+    enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40
+    param_text: stable_frames=1
+  exit_ratio:
+    enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40
+    param_text: exit_ratio=1.04
+heatmap_adopted:
+  enter_ratio: 1.06
+  exit_ratio: 1.04
+  stable_frames: 1
+  pinch_threshold_px: null
+  tp: 11
+  fn: 9
+  fp: 1
+  tn: 19
+  test_rate: 0.75
+  recall: 0.55
+  far: 0.05
+  latency_mean: 0.562896
+  n: 40
+  param_text: enter_ratio=1.06, exit_ratio=1.04, stable_frames=1
+local_optimum: false
+adopted:
+  enter_ratio: 1.06
+  exit_ratio: 1.04
+  stable_frames: 1
+  pinch_threshold_px: null
+  tp: 11
+  fn: 9
+  fp: 1
+  tn: 19
+  test_rate: 0.75
+  recall: 0.55
+  far: 0.05
+  latency_mean: 0.562896
+  n: 40
+  param_text: enter_ratio=1.06, exit_ratio=1.04, stable_frames=1
+  satisfactory: false
+pinch:
+  enter_ratio: null
+  exit_ratio: null
+  stable_frames: null
+  pinch_threshold_px: 25.0
+  tp: 0
+  fn: 20
+  fp: 0
+  tn: 20
+  test_rate: 0.5
+  recall: 0.0
+  far: 0.0
+  latency_mean: null
+  n: 40
+  param_text: pinch_threshold_px=25.0
+transfer:
+  collected: false
+curves:
+  enter_ratio:
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40
+  - enter_ratio: 1.08
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 6
+    fn: 14
+    fp: 0
+    tn: 20
+    test_rate: 0.65
+    recall: 0.3
+    far: 0.0
+    latency_mean: 0.714307
+    n: 40
+  - enter_ratio: 1.1
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 4
+    fn: 16
+    fp: 0
+    tn: 20
+    test_rate: 0.6
+    recall: 0.2
+    far: 0.0
+    latency_mean: 0.77231
+    n: 40
+  - enter_ratio: 1.12
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 4
+    fn: 16
+    fp: 0
+    tn: 20
+    test_rate: 0.6
+    recall: 0.2
+    far: 0.0
+    latency_mean: 0.821113
+    n: 40
+  - enter_ratio: 1.14
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 3
+    fn: 17
+    fp: 0
+    tn: 20
+    test_rate: 0.575
+    recall: 0.15
+    far: 0.0
+    latency_mean: 0.795783
+    n: 40
+  - enter_ratio: 1.16
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 3
+    fn: 17
+    fp: 0
+    tn: 20
+    test_rate: 0.575
+    recall: 0.15
+    far: 0.0
+    latency_mean: 0.795783
+    n: 40
+  - enter_ratio: 1.18
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 3
+    fn: 17
+    fp: 0
+    tn: 20
+    test_rate: 0.575
+    recall: 0.15
+    far: 0.0
+    latency_mean: 0.795783
+    n: 40
+  - enter_ratio: 1.2
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 2
+    fn: 18
+    fp: 0
+    tn: 20
+    test_rate: 0.55
+    recall: 0.1
+    far: 0.0
+    latency_mean: 0.793958
+    n: 40
+  - enter_ratio: 1.22
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 2
+    fn: 18
+    fp: 0
+    tn: 20
+    test_rate: 0.55
+    recall: 0.1
+    far: 0.0
+    latency_mean: 0.793958
+    n: 40
+  - enter_ratio: 1.24
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 2
+    fn: 18
+    fp: 0
+    tn: 20
+    test_rate: 0.55
+    recall: 0.1
+    far: 0.0
+    latency_mean: 0.842213
+    n: 40
+  - enter_ratio: 1.26
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 1
+    fn: 19
+    fp: 0
+    tn: 20
+    test_rate: 0.525
+    recall: 0.05
+    far: 0.0
+    latency_mean: 0.799756
+    n: 40
+  - enter_ratio: 1.28
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 1
+    fn: 19
+    fp: 0
+    tn: 20
+    test_rate: 0.525
+    recall: 0.05
+    far: 0.0
+    latency_mean: 0.893947
+    n: 40
+  stable_frames:
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 2
+    pinch_threshold_px: null
+    tp: 8
+    fn: 12
+    fp: 0
+    tn: 20
+    test_rate: 0.7
+    recall: 0.4
+    far: 0.0
+    latency_mean: 0.898885
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 3
+    pinch_threshold_px: null
+    tp: 6
+    fn: 14
+    fp: 0
+    tn: 20
+    test_rate: 0.65
+    recall: 0.3
+    far: 0.0
+    latency_mean: 0.993858
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 4
+    pinch_threshold_px: null
+    tp: 3
+    fn: 17
+    fp: 0
+    tn: 20
+    test_rate: 0.575
+    recall: 0.15
+    far: 0.0
+    latency_mean: 1.066962
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 5
+    pinch_threshold_px: null
+    tp: 1
+    fn: 19
+    fp: 0
+    tn: 20
+    test_rate: 0.525
+    recall: 0.05
+    far: 0.0
+    latency_mean: 1.200494
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 6
+    pinch_threshold_px: null
+    tp: 1
+    fn: 19
+    fp: 0
+    tn: 20
+    test_rate: 0.525
+    recall: 0.05
+    far: 0.0
+    latency_mean: 0.0
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 7
+    pinch_threshold_px: null
+    tp: 0
+    fn: 20
+    fp: 0
+    tn: 20
+    test_rate: 0.5
+    recall: 0.0
+    far: 0.0
+    latency_mean: null
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 8
+    pinch_threshold_px: null
+    tp: 0
+    fn: 20
+    fp: 0
+    tn: 20
+    test_rate: 0.5
+    recall: 0.0
+    far: 0.0
+    latency_mean: null
+    n: 40
+  exit_ratio:
+  - enter_ratio: 1.06
+    exit_ratio: 1.02
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 12
+    fn: 8
+    fp: 1
+    tn: 19
+    test_rate: 0.775
+    recall: 0.6
+    far: 0.05
+    latency_mean: 0.657334
+    n: 40
+  - enter_ratio: 1.06
+    exit_ratio: 1.04
+    stable_frames: 1
+    pinch_threshold_px: null
+    tp: 11
+    fn: 9
+    fp: 1
+    tn: 19
+    test_rate: 0.75
+    recall: 0.55
+    far: 0.05
+    latency_mean: 0.562896
+    n: 40

@@ -1,0 +1,13 @@
+# data_kind=real
+# source_csv=experiments/raw/session_select_40cm_20261021_211329.csv
+# This file is NOT loaded automatically.
+# Copy the keys below into config/local.yaml to opt in.
+depth_press:
+  enabled: true
+  source: finger_length
+  direction: far
+  enter_ratio: 1.06
+  exit_ratio: 1.04
+  stable_frames: 1
+interaction:
+  pinch_source: depth

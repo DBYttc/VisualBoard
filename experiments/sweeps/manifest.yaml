@@ -1,0 +1,4 @@
+data_kind: real
+raw_path: experiments/raw/session_select_40cm_20261021_211329.csv
+transfer_path: null
+optimal: D:\VisualBoard-1\experiments\optimal.yaml

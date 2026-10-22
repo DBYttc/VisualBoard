@@ -1,0 +1,46 @@
+# 扫参协议。选参规则在跑实验之前写死。没有 data_kind=real 的 CSV 时不得出曲线、不得写最优参数。
+
+data_kind_required: real
+pos_sec: 1.5
+neg_sec: 2.0
+trials_each: 20
+
+# 测试率 = (TP + TN) / N，N 为正负样本段数之和。空闲帧只更新基线，不进分母。
+# 正样本段内至少一次上升沿记 TP，否则 FN。负样本段内出现任何上升沿记 FP，否则 TN。
+# 最优刻度 = 网格上测试率最高的实测点，不插值。
+# 最高与次高相差不超过 1/N 视为平台。平台内依次：FAR 更低、延迟更短、
+# 更大的 enter_ratio、更大的 stable_frames、更小的 exit_ratio。
+# exit_ratio >= enter_ratio 的格子丢弃。
+
+satisfaction:
+  test_rate_min: 0.85
+  far_max: 0.15
+
+init:
+  enter_ratio: 1.12
+  exit_ratio: 1.06
+  stable_frames: 4
+
+grids:
+  enter_ratio:
+    start: 1.04
+    stop: 1.28
+    step: 0.02
+  exit_ratio:
+    start: 1.02
+    stop: 1.16
+    step: 0.02
+  stable_frames: [1, 2, 3, 4, 5, 6, 7, 8]
+  pinch_threshold_px:
+    start: 25
+    stop: 80
+    step: 5
+
+max_rounds: 2
+
+# 系统采用：热力表里测试率最高的合法格（enter_ratio, exit_ratio），
+# stable_frames 用坐标下降锁定的值。热力表在该 stable_frames 上计算。
+adoption: heatmap_max_legal_cell_plus_coordinate_stable_frames
+
+# 捏合确认帧数取 config/default.yaml 的 interaction.pinch_stable_frames，不跟深度的 stable_frames 走。
+pinch_stable_frames_from: interaction.pinch_stable_frames

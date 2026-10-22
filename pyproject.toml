@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4.0"]
+experiments = ["matplotlib>=3.7"]
 
 [project.scripts]
 krybord = "visualboard.app.main:main"
