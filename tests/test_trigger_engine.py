@@ -61,6 +61,33 @@ def test_key_sweep_cancels_pinch(interaction_settings: InteractionSettings):
     assert not events
 
 
+def test_trail_head_overrides_pressed_key(interaction_settings: InteractionSettings):
+    """按下时出"手指经过队列的队头"，而不是当前悬停的键。"""
+    engine = TriggerEngine(interaction_settings)
+    pressed_key = KeyId("key_b")
+    head = KeyId("key_a")
+    t = 0.0
+
+    engine.update(_pointer(30), pressed_key, t, trail_keys={"index": head})
+    events = engine.update(
+        _pointer(50), pressed_key, t + 0.01, trail_keys={"index": head}
+    )
+    assert len(events) == 1
+    assert events[0].key_id == head
+
+
+def test_trail_head_falls_back_when_empty(interaction_settings: InteractionSettings):
+    """队头为空（没扫过键）时，回落到按下瞬间的键。"""
+    engine = TriggerEngine(interaction_settings)
+    key = KeyId("key_b")
+    t = 0.0
+
+    engine.update(_pointer(30), key, t, trail_keys={"index": None})
+    events = engine.update(_pointer(50), key, t + 0.01, trail_keys={"index": None})
+    assert len(events) == 1
+    assert events[0].key_id == key
+
+
 def test_hover_mode(interaction_settings: InteractionSettings):
     settings = InteractionSettings(
         pinch_threshold_px=interaction_settings.pinch_threshold_px,

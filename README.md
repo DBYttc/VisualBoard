@@ -48,15 +48,25 @@ python -m visualboard.app.main
 安装后的命令名是 `krybord`，作用相同。
 
 3. 把手放在画面里，指尖移到虚拟键上，键面会高亮。
-4. 手指向桌面压下再抬起，触发一次。中文请切到系统拼音输入法，用本程序输入拼音，再按空格选词。
+4. 手指向桌面压下再抬起，触发一次。
 
 窗口标题是 **VisualBoard Virtual Keyboard**。
 
 | 键 | 作用 |
 |---|---|
 | `Q` | 退出 |
-| `R` | 复位触发器、Caps 和窗口内缓冲 |
+| `R` | 复位触发器、Caps、窗口内缓冲和本次拼音缓冲 |
 | `M` | 键盘模式与鼠标模式切换 |
+
+## 中文输入
+
+中文请切到系统拼音输入法，用本程序输入拼音，再按空格选词。
+
+`interaction.pinyin_correct` 默认 `false`。改成 `true` 后，程序在把字母发给系统之前，检查它能不能接上已经发出的拼音。接不上，并且指尖一键宽内有能接上的字母键，就改发那个字母。能接上就保持原键，即使旁边有更近的键。周围没有能接上的键时，原来的字母照发。这一层不选汉字：`zhong` 是「中」还是「钟」，仍由系统输入法决定。
+
+声母模糊（z/zh、c/ch、s/sh、n/l）和韵母模糊（an/ang、en/eng、in/ing）默认不参与这次判断。
+
+勾手指时指尖投影会跳到下一排。`interaction.press_key_from_trail` 默认 `false`。设为 `true` 时，按下瞬间改用这根手指最近扫过的键。`trail_min_dwell_ms` 大于 0 时，还要求那个键停留够这么多毫秒。它和拼音纠正各管一件事：队列修正的是跳排，拼音纠正修正的是跳过去的字母已经组不成音节。
 
 ## 当前参数
 
@@ -70,19 +80,21 @@ python -m visualboard.app.main
 | `depth_press.direction` | `far` | 投影变短算按下，对应俯视 |
 | `interaction.pinch_source` | `depth` | `contact` 才改用捏合 |
 
-40 cm 真人会话的扫参结果在 [`config/optimal_overlay.yaml`](config/optimal_overlay.yaml)，**不会自动生效**。那次选出的工作点是 `enter_ratio=1.06`、`exit_ratio=1.04`、`stable_frames=1`。20 次真按检出 11 次、漏掉 9 次，20 次干扰误触 1 次，测试率 0.75，误触率 0.05。事先写定的满意线是测试率不低于 0.85 且误触率不超过 0.15，这次没有达到。要沿用这组参数，把该文件里的键抄进 `config/local.yaml`。
+30 cm 真人会话的扫参结果在 [`config/optimal_overlay.yaml`](config/optimal_overlay.yaml)，**不会自动生效**。来源是 [`experiments/raw/session_select_30cm_20261023_012351.csv`](experiments/raw/session_select_30cm_20261023_012351.csv)，数字写在 [`experiments/optimal.yaml`](experiments/optimal.yaml)。选出的工作点是 `enter_ratio=1.16`、`exit_ratio=1.04`、`stable_frames=2`。20 次真按检出 18 次、漏掉 2 次，20 次干扰没有误触，测试率 0.95，误触率 0。事先写定的满意线是测试率不低于 0.85 且误触率不超过 0.15，这次达到了。要沿用这组参数，把该文件里的键抄进 `config/local.yaml`。
 
 ## 复现实验
 
 规则在 [`experiments/protocol.yaml`](experiments/protocol.yaml)。测试率是判对的正负样本段所占比例。最优刻度是网格上测试率最高的实测点，不在两格之间插值。没有 `data_kind=real` 的录像时，出图脚本会失败，不会画示意曲线。
 
-已有的 40 cm 选择会话：
+当前采用的 30 cm 选择会话：
 
 ```powershell
-python scripts\sweep_params.py --raw experiments\raw\session_select_40cm_20261021_211329.csv
+python scripts\sweep_params.py --raw experiments\raw\session_select_30cm_20261023_012351.csv
 python scripts\plot_curves.py
 python scripts\fill_report.py
 ```
+
+`experiments/raw/` 里还有更早的 40 cm 录像。它们不是 `experiments/optimal.yaml` 的来源。
 
 重新录制时，先把摄像头固定在手的上方并补光：
 
@@ -99,6 +111,15 @@ python scripts\record_session.py --distance-cm 40 --role select
 
 `P` 和 `N` 是记录窗口的开关，不会把字母打进其他软件。第二距离用 `--role transfer`，该文件不参与选参。本次仓库里没有第二距离录像。
 
+把一段打字视频当成摄像头回放，画面上会标出悬停键和队列。默认不往焦点软件打字：
+
+```powershell
+python scripts\replay_video.py 你的视频.mp4
+python scripts\replay_video.py 你的视频.mp4 --trail --dwell-ms 100
+```
+
+加上 `--type` 才会真的按键。空格暂停，`q` 退出。
+
 只看测量线、不写实验表：
 
 ```powershell
@@ -113,11 +134,11 @@ python scripts\benchmark_fps.py
 
 ```text
 摄像头 → MediaPipe 21 点 → 指尖平滑与五指投影
-      → 虚拟键盘命中 → 触发 → pynput
+      → 虚拟键盘命中 → 触发 → 可选拼音纠正 → pynput
 录像 → 重放 DepthPressDetector → 测试率曲线 → 课程报告
 ```
 
-编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)。
+编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，拼音纠正在 [`src/visualboard/input/pinyin_correct.py`](src/visualboard/input/pinyin_correct.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)。
 
 ## 常见问题
 
@@ -129,6 +150,7 @@ python scripts\benchmark_fps.py
 | 悬停时误触 | 增大 `enter_ratio` 或 `stable_frames` |
 | 看不到手 | 补光，手距摄像头大约 30–60 cm |
 | 按键没有进目标软件 | 先点击目标输入框；看窗口底部的红色错误。必要时换一台没有拦截 pynput 的电脑 |
+| 拼音把邻近字母改了 | 把 `interaction.pinyin_correct` 设回 `false`。这一层只改组不成音节的字母，不选汉字 |
 | MediaPipe 装不上 | 使用 Python 3.10/3.11，并安装 `mediapipe==0.10.14` |
 
-课程报告是仓库根目录下的两份 Markdown。综合实践报告中的测试率和曲线来自上面的 40 cm 会话。
+课程报告是仓库根目录下的两份 Markdown，正文没有随这次说明改动。综合实践报告里写的是 40 cm 会话；当前 [`experiments/optimal.yaml`](experiments/optimal.yaml) 来自上面的 30 cm 会话。

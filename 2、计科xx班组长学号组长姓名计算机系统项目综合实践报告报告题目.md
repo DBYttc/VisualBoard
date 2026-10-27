@@ -170,25 +170,25 @@ python scripts\sweep_params.py --raw <select.csv> --transfer <transfer.csv>
 `config/optimal_overlay.yaml` 只在 real 扫参之后生成，主程序不自动加载。没有 real CSV 时下面不放曲线，也不填测试率。
 
 <!-- vb:curves:start -->
-选择用会话：`experiments/raw/session_select_40cm_20261021_211329.csv`，距离 40 cm，正样本段 20、负样本段 20。坐标下降共 2 轮。下列曲线来自最后一轮。
+选择用会话：`experiments/raw/session_select_40cm_20261023_005927.csv`，距离 40 cm，正样本段 20、负样本段 20。坐标下降共 1 轮。下列曲线来自最后一轮。
 
 图中纵轴是测试率。标出的点是该条曲线按平台规则选出的刻度，不是插值。
 
 ![图 3-4 测试率随 enter_ratio 变化](experiments/figures/E2_enter_ratio.png)
 
-*图 3-4 测试率随 enter_ratio 变化。该曲线选出的刻度为 enter_ratio=1.06，测试率 0.7500，TP/FN/FP/TN = 11/9/1/19。*
+*图 3-4 测试率随 enter_ratio 变化。该曲线选出的刻度为 enter_ratio=1.28，测试率 0.5000，TP/FN/FP/TN = 0/20/0/20。*
 
 ![图 3-5 测试率随 stable_frames 变化](experiments/figures/E3_stable_frames.png)
 
-*图 3-5 测试率随 stable_frames 变化。该曲线选出的刻度为 stable_frames=1，测试率 0.7500，TP/FN/FP/TN = 11/9/1/19。*
+*图 3-5 测试率随 stable_frames 变化。该曲线选出的刻度为 stable_frames=8，测试率 0.5000，TP/FN/FP/TN = 0/20/0/20。*
 
 ![图 3-6 测试率随 exit_ratio 变化](experiments/figures/E4_exit_ratio.png)
 
-*图 3-6 测试率随 exit_ratio 变化。该曲线选出的刻度为 exit_ratio=1.04，测试率 0.7500，TP/FN/FP/TN = 11/9/1/19。*
+*图 3-6 测试率随 exit_ratio 变化。该曲线选出的刻度为 exit_ratio=1.02，测试率 0.5000，TP/FN/FP/TN = 0/20/0/20。*
 
 ![图 3-7 测试率随 enter_ratio 与 exit_ratio 变化](experiments/figures/E5_enter_x_exit_heatmap.png)
 
-*图 3-7 测试率随 enter_ratio 与 exit_ratio 变化。表中测试率最高的合法格为 enter_ratio=1.06，exit_ratio=1.04，测试率 0.7500。非法格（exit ≥ enter）没有画出。*
+*图 3-7 测试率随 enter_ratio 与 exit_ratio 变化。表中测试率最高的合法格为 enter_ratio=1.28，exit_ratio=1.02，测试率 0.5000。非法格（exit ≥ enter）没有画出。*
 <!-- vb:curves:end -->
 
 ---
@@ -198,21 +198,21 @@ python scripts\sweep_params.py --raw <select.csv> --transfer <transfer.csv>
 物理关系上，`enter_ratio` 偏小会让负样本段里的噪声跨过阈值，FAR 上升，测试率下降；偏大则正样本段的 `signal` 不够，Recall 下降，测试率同样下降。这是曲线形态的解释框架。具体格子上的 TP、FN、FP、TN 只能来自真人 sweep。
 
 <!-- vb:conclusions:start -->
-每个数对应 `experiments/sweeps/` 里同一参数组合的一行，会话为 `experiments/raw/session_select_40cm_20261021_211329.csv`。
+每个数对应 `experiments/sweeps/` 里同一参数组合的一行，会话为 `experiments/raw/session_select_40cm_20261023_005927.csv`。
 
 | 工作点 | 参数 | TP | FN | FP | TN | 测试率 | Recall | FAR | 延迟 |
 |---|---|---|---|---|---|---|---|---|---|
-| 坐标下降三元组 | enter_ratio=1.06, exit_ratio=1.04, stable_frames=1 | 11 | 9 | 1 | 19 | 0.7500 | 0.5500 | 0.0500 | 0.5629 s |
-| 热力表采用格（系统采用） | enter_ratio=1.06, exit_ratio=1.04, stable_frames=1 | 11 | 9 | 1 | 19 | 0.7500 | 0.5500 | 0.0500 | 0.5629 s |
+| 坐标下降三元组 | enter_ratio=1.28, exit_ratio=1.02, stable_frames=8 | 0 | 20 | 0 | 20 | 0.5000 | 0.0000 | 0.0000 | 无 TP |
+| 热力表采用格（系统采用） | enter_ratio=1.28, exit_ratio=1.02, stable_frames=8 | 0 | 20 | 0 | 20 | 0.5000 | 0.0000 | 0.0000 | 无 TP |
 | contact 工作点 | pinch_threshold_px=25.0 | 0 | 20 | 0 | 20 | 0.5000 | 0.0000 | 0.0000 | 无 TP |
 
 热力表最高格相对坐标下降三元组的测试率提升不超过 1/N。系统采用的 enter_ratio 与 exit_ratio 仍取热力表最高合法格，stable_frames 取坐标下降结果。
 
-系统采用格的测试率为 0.7500，FAR 为 0.0500，未达到满意线（测试率 ≥ 0.85 且 FAR ≤ 0.15）。
+系统采用格的测试率为 0.5000，FAR 为 0.0000，未达到满意线（测试率 ≥ 0.85 且 FAR ≤ 0.15）。
 
-enter_ratio 曲线的选出刻度是 1.06。更大的刻度里，Recall 最低出现在 1.26（Recall 0.0500，测试率 0.5250）。正样本段更容易漏检。
+enter_ratio 曲线的选出刻度是 1.28。更小的刻度里，FAR 最高出现在 1.04（FAR 0.0000，测试率 0.5000）。负样本段更容易出现上升沿。
 
-同一会话上，depth 采用格测试率 0.7500、Recall 0.5500、FAR 0.0500；contact 工作点（pinch_threshold_px=25.0）测试率 0.5000、Recall 0.0000、FAR 0.0000。这是同一批正负段、同一条平台规则下的比较，不是显著性检验。
+同一会话上，depth 采用格测试率 0.5000、Recall 0.0000、FAR 0.0000；contact 工作点（pinch_threshold_px=25.0）测试率 0.5000、Recall 0.0000、FAR 0.0000。这是同一批正负段、同一条平台规则下的比较，不是显著性检验。
 
 第二距离：未采集。
 <!-- vb:conclusions:end -->
