@@ -54,6 +54,13 @@ class InteractionSettings:
     pinch_stable_frames: int
     # 什么算"按下"：contact = 原来的拇指-食指接触；depth = 表观尺寸变化（见 depth_press）
     pinch_source: Literal["contact", "depth", "both"] = "contact"
+    # 按下时出哪个键：False = 当前悬停的键（默认，和以前完全一致）；
+    # True = 手指"最近扫过"的键（队列队尾）。用途：勾手指触发时指尖投影会
+    # 下移、hover 可能先跳到下面一排的键，取"最近扫过的"可以抵消这个跳动。
+    press_key_from_trail: bool = False
+    # >0 时只认"停留时间够长"的键（毫秒）：从队尾往回找，跳过刚滑上去就被抓住的键。
+    # 0 = 不过滤（直接取队尾）。100ms ≈ 30fps 下的 3 帧。
+    trail_min_dwell_ms: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,6 +263,8 @@ def _parse_settings(data: dict[str, Any]) -> Settings:
                 _require(inter, "pinch_stable_frames", "interaction")
             ),
             pinch_source=str(inter.get("pinch_source", "contact")),
+            press_key_from_trail=bool(inter.get("press_key_from_trail", False)),
+            trail_min_dwell_ms=int(inter.get("trail_min_dwell_ms", 0)),
         ),
         smoothing=SmoothingSettings(
             ema_alpha=float(_require(smooth, "ema_alpha", "smoothing")),

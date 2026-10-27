@@ -15,11 +15,14 @@
 from __future__ import annotations
 
 import time
+from collections import deque
 from typing import Dict, List, Optional, Tuple
 
 from visualboard.core.config_loader import UISettings
 from visualboard.core.types import KeyId, Point2D
 from visualboard.ui.button import Button
+
+from visualboard.vision.landmarks import FINGER_NAMES
 
 UNIT_COLUMNS = 15.0
 
@@ -131,7 +134,7 @@ class VirtualKeyboard:
         self._top = 0.0
         self._bottom = 0.0
         self._build_layout()
-
+        self._trail:dict[str,deque] = {name:deque(maxlen=10) for name in FINGER_NAMES}
     # ------------------------------------------------------------- 几何/状态
 
     @property
@@ -205,23 +208,67 @@ class VirtualKeyboard:
         self._caps_on = False
         self._shift_armed = False
         self.clear_hover()
+        self.clear_trail()
         self._flash_until.clear()
 
     def clear_hover(self) -> None:
         for btn in self._buttons:
             btn.is_hovered = False
 
-    def update_hover(self, point: Point2D) -> Optional[KeyId]:
+    def update_hover(self, point: Point2D, now: Optional[float] = None) -> Optional[KeyId]:
         self.clear_hover()
         # 倒序遍历：后画的键（底行 Space）在重叠时优先
+        hit = None
         for btn in reversed(self._buttons):
             if btn.contains(point.x, point.y):
                 btn.is_hovered = True
-                return btn.key_id
-        return None
+                hit = btn.key_id
+                break
+        if hit is not None:
+            self._record_hit("index", hit, now)
+        return hit
+
+    def _record_hit(self, name, key_id, now: Optional[float] = None):
+        trail = self._trail[name]
+        if trail and trail[-1][0] == key_id:
+            return
+        if now is None:
+            now = time.monotonic()
+        trail.append((key_id, now))
+
+    def trail_last(
+        self,
+        name: str,
+        min_dwell_ms: float = 0.0,
+        now: Optional[float] = None,
+    ) -> Optional[KeyId]:
+        """最近扫过的键（队尾）。
+
+        min_dwell_ms > 0 时只认"停留时间够长"的键：从队尾往回找，跳过
+        刚滑上去就被按下抓住的键（勾手指时指尖投影下移，hover 会先跳到
+        下面一排的键，用这个阈值可以把那次误跳过滤掉）。
+        """
+        trail = self._trail[name]
+        if not trail:
+            return None
+        if min_dwell_ms <= 0.0:
+            return trail[-1][0]
+        if now is None:
+            now = time.monotonic()
+        entries = list(trail)
+        for i in range(len(entries) - 1, -1, -1):
+            _, t_enter = entries[i]
+            t_exit = entries[i + 1][1] if i + 1 < len(entries) else now
+            if (t_exit - t_enter) * 1000.0 >= min_dwell_ms:
+                return entries[i][0]
+        return entries[-1][0]  # 全都不够长时，至少给出最近那个
+
+    def clear_trail(self) -> None:
+        for trail in self._trail.values():
+            trail.clear()
 
     def update_hovers(
-        self, points: Dict[str, Point2D]
+        self, points: Dict[str, Point2D],now
     ) -> Dict[str, Optional[KeyId]]:
         """五指各自命中测试（多指可同时高亮不同的键）。
 
@@ -239,7 +286,11 @@ class VirtualKeyboard:
                     hit = btn.key_id
                     break
             result[name] = hit
+            if hit is not None:
+                self._record_hit(name,hit,now)
         return result
+
+
 
     def hit_test(self, px: float, py: float) -> Optional[KeyId]:
         for btn in reversed(self._buttons):

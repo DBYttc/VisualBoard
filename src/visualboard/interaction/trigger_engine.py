@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional
 
+from collections import deque
+
 from visualboard.core.config_loader import DepthPressSettings, InteractionSettings
 from visualboard.core.types import KeyId, PointerState, TriggerSource
 from visualboard.interaction.events import KeyTriggerEvent
@@ -70,6 +72,16 @@ class TriggerEngine:
             return False
         return (now - st.last_fire_time) < self._settings.cooldown_sec
 
+    @staticmethod
+    def _trail_key(
+        trail_keys: Optional[Dict[str, Optional[KeyId]]],
+        name: str,
+        fallback: Optional[KeyId],
+    ) -> Optional[KeyId]:
+        """按下时出哪个键：队头优先；队头为空（没扫过键）时回落到按下瞬间的键。"""
+        head = (trail_keys or {}).get(name)
+        return head if head is not None else fallback
+
     def _emit(
         self,
         key_id: KeyId,
@@ -105,6 +117,7 @@ class TriggerEngine:
         now: float,
         events: List[KeyTriggerEvent],
         depth_pressed: Optional[bool] = None,
+        trail_keys: Optional[Dict[str, Optional[KeyId]]] = None,
     ) -> None:
         if not pointer.valid or hovered_key_id is None:
             # FIRED 状态下即使暂时离开键位也要保持，否则手指还压着时移回键上会再触发一次
@@ -166,7 +179,9 @@ class TriggerEngine:
         if fire_on in ("stable_frames", "press_edge") and pinching:
             self._stable_frames += 1
             if self._stable_frames >= self._settings.pinch_stable_frames:
-                self._emit(self._pinch_key, trigger_source, now, events)
+                key = self._trail_key(trail_keys, "index", self._pinch_key)
+                if key is not None:
+                    self._emit(key, trigger_source, now, events)
                 if fire_on == "press_edge":
                     # 出字后停在 FIRED，按住不放也不会连发；松开（回到中立区）才复位
                     self._pinch_state = _PinchState.FIRED
@@ -180,7 +195,9 @@ class TriggerEngine:
 
         if not pinching and self._pinch_key is not None:
             if fire_on == "release":
-                self._emit(self._pinch_key, trigger_source, now, events)
+                key = self._trail_key(trail_keys, "index", self._pinch_key)
+                if key is not None:
+                    self._emit(key, trigger_source, now, events)
             self._pinch_state = _PinchState.IDLE
             self._pinch_key = None
             self._stable_frames = 0
@@ -192,6 +209,7 @@ class TriggerEngine:
         finger_pressed: Dict[str, bool],
         now: float,
         events: List[KeyTriggerEvent],
+        trail_keys: Optional[Dict[str, Optional[KeyId]]] = None,
     ) -> None:
         """Independent press_edge / stable_frames / release state machine per finger."""
         latch = bool(self._depth_settings is not None and self._depth_settings.latch_key)
@@ -236,7 +254,9 @@ class TriggerEngine:
                 st.stable_frames += 1
                 if st.stable_frames >= self._settings.pinch_stable_frames:
                     if st.key is not None:
-                        self._emit(st.key, "depth", now, events, finger=name)
+                        key = self._trail_key(trail_keys, name, st.key)
+                        if key is not None:
+                            self._emit(key, "depth", now, events, finger=name)
                     if fire_on == "press_edge":
                         st.state = _PinchState.FIRED
                         st.stable_frames = 0
@@ -248,7 +268,9 @@ class TriggerEngine:
 
             if not pressed and st.key is not None:
                 if fire_on == "release":
-                    self._emit(st.key, "depth", now, events, finger=name)
+                    key = self._trail_key(trail_keys, name, st.key)
+                    if key is not None:
+                        self._emit(key, "depth", now, events, finger=name)
                 st.state = _PinchState.IDLE
                 st.key = None
                 st.stable_frames = 0
@@ -286,6 +308,7 @@ class TriggerEngine:
         depth_pressed: Optional[bool] = None,
         finger_keys: Optional[Dict[str, Optional[KeyId]]] = None,
         finger_pressed: Optional[Dict[str, bool]] = None,
+        trail_keys: Optional[Dict[str, Optional[KeyId]]] = None,
     ) -> List[KeyTriggerEvent]:
         events: List[KeyTriggerEvent] = []
         mode = self._settings.trigger_mode
@@ -296,7 +319,9 @@ class TriggerEngine:
                 and finger_keys is not None
                 and finger_pressed is not None
             ):
-                self._update_multi_finger_depth(finger_keys, finger_pressed, now, events)
+                self._update_multi_finger_depth(
+                    finger_keys, finger_pressed, now, events, trail_keys
+                )
                 # both: also allow classic contact pinch on index hover
                 if self._settings.pinch_source == "both":
                     contact = (
@@ -304,9 +329,13 @@ class TriggerEngine:
                         and pointer.pinch_distance_px < self._settings.pinch_threshold_px
                     )
                     if contact:
-                        self._update_pinch(pointer, hovered_key_id, now, events, False)
+                        self._update_pinch(
+                            pointer, hovered_key_id, now, events, False, trail_keys
+                        )
             else:
-                self._update_pinch(pointer, hovered_key_id, now, events, depth_pressed)
+                self._update_pinch(
+                    pointer, hovered_key_id, now, events, depth_pressed, trail_keys
+                )
         if mode in ("hover", "both") and not events:
             self._update_hover(hovered_key_id, now, events)
 

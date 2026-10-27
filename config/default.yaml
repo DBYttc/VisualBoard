@@ -28,6 +28,11 @@ interaction:
   pinch_fire_on: press_edge  # release | stable_frames | press_edge
   pinch_stable_frames: 3
   pinch_source: depth  # contact | depth | both（depth = 五指投影长度变化）
+  # 按下时出哪个键：false = 当前悬停键（默认）；true = 手指"最近扫过"的键（队列队尾）
+  # 原因：勾手指触发时指尖投影下移，hover 可能先跳到下面一排的键，取最近扫过的可抵消跳动
+  press_key_from_trail: false
+  # true 时生效：>0 只认"停留 >= 该毫秒数"的键，跳过刚滑上去就被抓住的键（0 = 不过滤）
+  trail_min_dwell_ms: 0
 
 # 用"手指表观尺寸随距离的变化"判断是否按下。
 # 物理：单目下 w_px ≈ f·W/Z，所以尺寸变大 = 离摄像头更近。

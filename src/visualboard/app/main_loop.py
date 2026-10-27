@@ -27,6 +27,7 @@ from visualboard.vision.finger_width import (
     scale_segment_px,
 )
 from visualboard.vision.hand_tracker import HandTracker
+from visualboard.vision.landmarks import FINGER_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -207,12 +208,27 @@ class MainLoop:
                         depth_pressed = self._read_depth_press(frame, hand, now)
 
                     if self._modes.mode == "keyboard":
+                        use_trail = self._settings.interaction.press_key_from_trail
                         if self._use_multi_finger_depth() and pointer.fingers:
                             tips = {f.name: f.tip_px for f in pointer.fingers}
-                            finger_keys = self._keyboard.update_hovers(tips)
+                            finger_keys = self._keyboard.update_hovers(tips, now)
                             hover_id = finger_keys.get("index")
                         else:
-                            hover_id = self._keyboard.update_hover(pointer.index_px)
+                            hover_id = self._keyboard.update_hover(pointer.index_px, now)
+
+                        # 最近扫过的键（只在开了 press_key_from_trail 时才取）
+                        trail_keys = (
+                            {
+                                name: self._keyboard.trail_last(
+                                    name,
+                                    self._settings.interaction.trail_min_dwell_ms,
+                                    now,
+                                )
+                                for name in FINGER_NAMES
+                            }
+                            if use_trail
+                            else None
+                        )
 
                         for event in self._trigger.update(
                             pointer,
@@ -221,6 +237,7 @@ class MainLoop:
                             depth_pressed,
                             finger_keys=finger_keys,
                             finger_pressed=finger_pressed,
+                            trail_keys=trail_keys,
                         ):
                             char = self._emitter.emit_and_get_char(event)
                             self._keyboard.flash_pressed(event.key_id)
@@ -236,6 +253,7 @@ class MainLoop:
                     self._multi_depth.reset()
                     self._depth_info = None
                     self._keyboard.clear_hover()
+                    self._keyboard.clear_trail()
 
                 self._keyboard.tick_flash(now)
 

@@ -14,3 +14,11 @@ depth_press_snapshot*.png
 *.depth_debug.png
 *.mp4
 .DS_Store
+test/
+experiments/figures/
+
+# 实验：原始日志每次运行都新增，不入库（表格与文档照常入库）
+实验/05_日志/*.txt
+实验/05_日志/*.log
+# 实验：原始视频很大（*.mp4 已忽略），原始素材目录不入库
+实验/02_数据集/raw/

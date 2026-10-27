@@ -1,0 +1,4 @@
+﻿日期,实验组,档位,被试/操作者,光照,摄像头高度cm,桌面背景,source,direction,enter_ratio,exit_ratio,stable_frames,pinch_stable_frames,warmup_sec,cooldown_sec,ema_alpha,测试短语,目标字符数,实际出字数,误触次数,漏触次数,平均延迟ms,日志文件,参数快照,结论/备注
+示例-删除,A,基线,S1,顶灯+补光,45,木桌,finger_length,far,1.10,1.06,2,3,3.0,0.4,0.3,the quick brown fox jumps,25,24,1,1,170,run_20261021_1050_A2.txt,参数快照_20261020_基线.md,示例行：第一次熟悉流程，漏了空格
+示例-删除,A,A1,S1,顶灯+补光,45,木桌,finger_length,far,1.06,1.02,2,3,3.0,0.4,0.3,the quick brown fox jumps,25,25,4,0,150,run_20261021_1105_A1.txt,参数快照_20261021_A1.md,示例行：太灵敏，悬停时自己出字
+示例-删除,A,A3,S1,顶灯+补光,45,木桌,finger_length,far,1.14,1.10,2,3,3.0,0.4,0.3,the quick brown fox jumps,25,18,0,7,190,run_20261021_1120_A3.txt,参数快照_20261021_A3.md,示例行：太钝，需要明显下压
