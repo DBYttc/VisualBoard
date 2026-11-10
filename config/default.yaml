@@ -33,6 +33,8 @@ interaction:
   press_key_from_trail: false
   # true 时生效：>0 只认"停留 >= 该毫秒数"的键，跳过刚滑上去就被抓住的键（0 = 不过滤）
   trail_min_dwell_ms: 0
+  # 发出字母前按能否接成拼音音节纠正。false = 原样发出；true = 接不上时改发指尖附近的合法字母
+  pinyin_correct: true
 
 # 用"手指表观尺寸随距离的变化"判断是否按下。
 # 物理：单目下 w_px ≈ f·W/Z，所以尺寸变大 = 离摄像头更近。
