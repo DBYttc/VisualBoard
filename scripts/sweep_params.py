@@ -173,7 +173,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         "data_kind": "real",
         "raw_path": payload["raw_path"],
         "transfer_path": None if transfer is None else _rel(transfer.path),
-        "optimal": str(args.optimal),
+        # 和 raw_path / transfer_path 一样用仓库相对路径，避免换机器/换目录后失效
+        "optimal": _rel(args.optimal),
     }
     with (args.sweep_dir / "manifest.yaml").open("w", encoding="utf-8") as handle:
         yaml.safe_dump(manifest, handle, allow_unicode=True, sort_keys=False)
