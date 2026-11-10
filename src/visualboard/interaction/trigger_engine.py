@@ -102,7 +102,9 @@ class TriggerEngine:
             logger.debug("Trigger suppressed by cooldown key=%s", key_id)
             return
         events.append(
-            KeyTriggerEvent(key_id=key_id, source=source, timestamp=now)
+            KeyTriggerEvent(
+                key_id=key_id, source=source, timestamp=now, finger=finger
+            )
         )
         if finger is not None:
             st = self._finger_states.setdefault(finger, _FingerTriggerState())

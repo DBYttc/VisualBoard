@@ -17,6 +17,7 @@ from visualboard.interaction.modes import ModeController
 from visualboard.interaction.multi_finger_depth import MultiFingerDepthPress
 from visualboard.interaction.pointer_state import PointerStateTracker
 from visualboard.interaction.trigger_engine import TriggerEngine
+from visualboard.input.pinyin_correct import PinyinComposition, correct_event
 from visualboard.io.keyboard_emitter import KeyboardEmitter
 from visualboard.io.mouse_emitter import MouseEmitter
 from visualboard.ui.presenter import HudState, Presenter
@@ -80,6 +81,7 @@ class MainLoop:
         self._fps = FpsCounter()
         self._window = settings.demo.window_name
         self._typed_buffer = ""
+        self._pinyin = PinyinComposition()
 
     def _use_multi_finger_depth(self) -> bool:
         return (
@@ -96,6 +98,7 @@ class MainLoop:
         self._depth.reset()
         self._multi_depth.reset()
         self._typed_buffer = ""
+        self._pinyin.clear()
 
     def _read_depth_press(self, frame: Frame, hand: HandResult, now: float) -> bool:
         """单指表观尺寸路径（mask / hand_scale）。五指 finger_length 走 _multi_depth。"""
@@ -239,9 +242,19 @@ class MainLoop:
                             finger_pressed=finger_pressed,
                             trail_keys=trail_keys,
                         ):
-                            char = self._emitter.emit_and_get_char(event)
-                            self._keyboard.flash_pressed(event.key_id)
+                            emit_event = event
+                            if self._settings.interaction.pinyin_correct:
+                                emit_event = correct_event(
+                                    self._keyboard,
+                                    self._pinyin.text,
+                                    event,
+                                    pointer,
+                                )
+                            char = self._emitter.emit_and_get_char(emit_event)
+                            self._keyboard.flash_pressed(emit_event.key_id)
                             self._append_buffer(char)
+                            if self._settings.interaction.pinyin_correct:
+                                self._pinyin.observe(char)
                     else:
                         self._keyboard.clear_hover()
                         self._mouse.update(
