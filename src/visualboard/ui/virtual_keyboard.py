@@ -308,6 +308,13 @@ class VirtualKeyboard:
         for btn in self._buttons:
             btn.is_pressed_flash = btn.key_id in self._flash_until
 
+    def plain_letter(self, key_id: KeyId) -> Optional[str]:
+        """这个键对应的小写字母。不改 Caps / Shift，非字母返回 None。"""
+        action = self._char_map.get(key_id)
+        if action is None or len(action) != 1 or not action.isalpha():
+            return None
+        return action
+
     def resolve_output(self, key_id: KeyId) -> Optional[str]:
         """键位 -> 要输出的字符。返回 None 表示这个键只改状态（Shift / Caps）。"""
         action = self._char_map.get(key_id)

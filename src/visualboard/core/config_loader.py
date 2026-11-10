@@ -61,6 +61,8 @@ class InteractionSettings:
     # >0 时只认"停留时间够长"的键（毫秒）：从队尾往回找，跳过刚滑上去就被抓住的键。
     # 0 = 不过滤（直接取队尾）。100ms ≈ 30fps 下的 3 帧。
     trail_min_dwell_ms: int = 0
+    # 发出字母之前按拼音音节纠正。false = 原样发出。
+    pinyin_correct: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -265,6 +267,7 @@ def _parse_settings(data: dict[str, Any]) -> Settings:
             pinch_source=str(inter.get("pinch_source", "contact")),
             press_key_from_trail=bool(inter.get("press_key_from_trail", False)),
             trail_min_dwell_ms=int(inter.get("trail_min_dwell_ms", 0)),
+            pinyin_correct=bool(inter.get("pinyin_correct", False)),
         ),
         smoothing=SmoothingSettings(
             ema_alpha=float(_require(smooth, "ema_alpha", "smoothing")),
