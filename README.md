@@ -1,4 +1,4 @@
-﻿# VisualBoard
+# VisualBoard
 
 单目摄像头上的无接触虚拟键盘。手指悬停选中屏幕上的键，向桌面下压后，程序把该键送进当前焦点窗口。
 
@@ -99,6 +99,38 @@ python scripts\record_session.py --distance-cm 40 --role select
 
 `P` 和 `N` 是记录窗口的开关，不会把字母打进其他软件。第二距离用 `--role transfer`，该文件不参与选参。本次仓库里没有第二距离录像。
 
+### 视频回放
+
+把录好的输入视频当成摄像头，喂给和实时打字完全相同的流水线（MediaPipe → 判定 → 出字）。同一段视频配不同参数，输入完全相同，适合对比两套参数，排除人的手抖和学习效应。
+
+注意：必须是**摄像头视角**的录像（OBS 选 Video Capture Device），不是屏幕录制；机位、光照、`camera.mirror` 要和平时一致，否则画面左右反、按键全偏。
+
+```powershell
+# 直接播放：按视频速度走，弹窗显示画面
+python scripts\replay_video.py test\typing_01.mp4 --label baseline
+
+# 开"最近扫过的键"，并只认停留 100 ms 以上的键
+python scripts\replay_video.py test\typing_01.mp4 --label trail100 --trail --dwell-ms 100
+
+# 不弹窗、不等待，尽快跑完（快速试参数）
+python scripts\replay_video.py test\typing_01.mp4 --label quick --fast --no-window
+```
+
+播放窗口里画面和实时打字时一样：虚拟键盘、手部骨架、悬停高亮，右上角另标四行——帧号与视频时间、当前悬停键、最近扫过的队列、最近出的字。
+
+| 按键 | 作用 |
+|---|---|
+| `空格` | 暂停 / 继续（暂停时画面停住，便于逐帧核对） |
+| `Q` | 退出 |
+| `R` | 重新标定 |
+| `M` | 键盘模式与鼠标模式切换 |
+
+时间基准取视频时间（帧号除以视频帧率），所以 `warmup_sec`、`cooldown_sec`、`trail_min_dwell_ms` 这些按秒写的参数在回放时和录制时含义一致；`--fast` 只跳过等待，不改时间基准。
+
+默认不真的按键，出字顺序收集起来最后打印，并写一份 CSV 到视频旁边（`<视频名>.replay_<label>.csv`），每次按下一行，含 `trail_last`、`trail_prev`、`trail_filtered`。加 `--type` 才用 pynput 真的打进当前窗口。
+
+回放和 `record_session.py` 的区别：后者存的是五指投影长度数值，重放时跳过检测；视频回放会真的跑 MediaPipe，能重现悬停跳行、遮挡这类识别问题。
+
 只看测量线、不写实验表：
 
 ```powershell
@@ -115,9 +147,10 @@ python scripts\benchmark_fps.py
 摄像头 → MediaPipe 21 点 → 指尖平滑与五指投影
       → 虚拟键盘命中 → 触发 → pynput
 录像 → 重放 DepthPressDetector → 测试率曲线 → 课程报告
+视频 → 摄像头替身 → 同一条流水线 → 出字序列 + CSV
 ```
 
-编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)。
+编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)，视频回放在 [`scripts/replay_video.py`](scripts/replay_video.py)。
 
 ## 常见问题
 
