@@ -48,15 +48,25 @@ python -m visualboard.app.main
 安装后的命令名是 `krybord`，作用相同。
 
 3. 把手放在画面里，指尖移到虚拟键上，键面会高亮。
-4. 手指向桌面压下再抬起，触发一次。中文请切到系统拼音输入法，用本程序输入拼音，再按空格选词。
+4. 手指向桌面压下再抬起，触发一次。
 
 窗口标题是 **VisualBoard Virtual Keyboard**。
 
 | 键 | 作用 |
 |---|---|
 | `Q` | 退出 |
-| `R` | 复位触发器、Caps 和窗口内缓冲 |
+| `R` | 复位触发器、Caps、窗口内缓冲和本次拼音缓冲 |
 | `M` | 键盘模式与鼠标模式切换 |
+
+## 中文输入
+
+中文请切到系统拼音输入法，用本程序输入拼音，再按空格选词。程序不选汉字：`zhong` 是「中」还是「钟」，仍由系统输入法决定。
+
+`config/default.yaml` 里 `interaction.pinyin_correct` 为 `true`。发出字母之前，程序检查它能不能接上已经发出的拼音。接不上，并且触发这根手指的指尖一键宽内有能接上的字母键，就改发那个字母。能接上就保持原键，即使旁边有更近的键。周围没有能接上的键时，原来的字母照发。Caps 或 Shift 打开时不改键。空格、回车和数字会清空这次拼音缓冲，退格只删最后一个拼音字母。按 `R` 也会清空。
+
+音节表是《汉语拼音方案》里的无声调音节，ü 在 `j/q/x/y` 后写成 `u`，在 `n/l` 后写成 `v`。声母模糊（z/zh、c/ch、s/sh、n/l）和韵母模糊（an/ang、en/eng、in/ing）写在 [`src/visualboard/input/pinyin_syllables.py`](src/visualboard/input/pinyin_syllables.py) 里，实时纠正默认不用这两张表。把 `interaction.pinyin_correct` 设回 `false` 后，字母恢复原样发出。
+
+这一层只改组不成音节的字母，不改按压判决，也不改「最近扫过的键」。`press_key_from_trail` 管的是勾手指时指尖跳排，拼音纠正管的是跳过去的字母已经组不成音节。
 
 ## 当前参数
 
@@ -145,12 +155,12 @@ python scripts\benchmark_fps.py
 
 ```text
 摄像头 → MediaPipe 21 点 → 指尖平滑与五指投影
-      → 虚拟键盘命中 → 触发 → pynput
+      → 虚拟键盘命中 → 触发 → 可选拼音纠正 → pynput
 录像 → 重放 DepthPressDetector → 测试率曲线 → 课程报告
 视频 → 摄像头替身 → 同一条流水线 → 出字序列 + CSV
 ```
 
-编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)，视频回放在 [`scripts/replay_video.py`](scripts/replay_video.py)。
+编排在 [`src/visualboard/app/main_loop.py`](src/visualboard/app/main_loop.py)。按压判决在 [`src/visualboard/interaction/depth_press.py`](src/visualboard/interaction/depth_press.py)，拼音纠正在 [`src/visualboard/input/pinyin_correct.py`](src/visualboard/input/pinyin_correct.py)，离线指标在 [`src/visualboard/eval/`](src/visualboard/eval/)，视频回放在 [`scripts/replay_video.py`](scripts/replay_video.py)。
 
 ## 常见问题
 
@@ -162,6 +172,7 @@ python scripts\benchmark_fps.py
 | 悬停时误触 | 增大 `enter_ratio` 或 `stable_frames` |
 | 看不到手 | 补光，手距摄像头大约 30–60 cm |
 | 按键没有进目标软件 | 先点击目标输入框；看窗口底部的红色错误。必要时换一台没有拦截 pynput 的电脑 |
+| 拼音把邻近字母改了 | 把 `interaction.pinyin_correct` 设回 `false`。这一层只改组不成音节的字母，不选汉字 |
 | MediaPipe 装不上 | 使用 Python 3.10/3.11，并安装 `mediapipe==0.10.14` |
 
 课程报告是仓库根目录下的两份 Markdown。综合实践报告中的测试率和曲线来自上面的 40 cm 会话。
